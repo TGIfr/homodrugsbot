@@ -116,17 +116,29 @@ bot.command('inspiration', async(ctx) => {
 //     }
 // });
 //
-// bot.command('mongolian', async (ctx) => {
-//     try {
-//
-//         console.log('mongolian command')
-//         ctx.replyWithMarkdown(getMongolian())
-//
-//     } catch (e) {
-//         console.log("Error while mongolian command " + e);
-//         ctx.reply(`Some server problem, contact bot creator @TGIfr`);
-//     }
-// });
+bot.command('setphone', async (ctx) => {
+    try {
+        console.log('setphone command')
+        ctx.reply('Send me your number please',
+            { reply_markup: { keyboard: [[{text: '📲 Send phone number', request_contact: true}]] } })
+
+    } catch (e) {
+        console.log("Error while sephone command " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+});
+
+bot.on('contact',async (ctx) => {
+    try {
+        console.log(ctx.message)
+        console.log('getting phone command')
+        ctx.reply('Номер телефону встановлено!', Telegraf.Extra.markup(Telegraf.Markup.removeKeyboard()))
+
+    } catch (e) {
+        console.log("Error while getting command " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+});
 
 bot.command('hui', async (ctx) => {
     ctx.reply(`И что ты хотел тут увидеть?
@@ -140,9 +152,9 @@ bot.command('start', async (ctx) => {
 /start - отримати інформацію про можливі команди
 /getrecipe - подивитися доступні рецепти
 /book - записатися на прийом до лікаря
+/setphone - встановити номер телефону
 [ ](${URL}/hello.png)`);
 });
-
 
 // and at the end just start server on PORT
 expressApp.get('/', (req, res) => {
