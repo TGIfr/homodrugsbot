@@ -3,6 +3,7 @@ if(process.env.NODE_ENV !== 'production')
 
 
 const Telegraf = require('telegraf');
+const Markup = Telegraf.Markup;
 const express = require('express');
 const expressApp = express();
 
@@ -35,15 +36,63 @@ if(process.env.NODE_ENV !== 'development'){
 
 expressApp.use(bot.webhookCallback(`/bot${API_TOKEN}`));
 
+var bookPages = 100;
 
+let doctors = ['sdf', 'asdfsafd', 'arhgf', 'sfdaujfd', 'asvbfadsf', 'asdfadfhfds', 'asdfawerfsd', 'asdsanbdf', 'asdfaxcvsdf', 'asdsdffasdf', 'asdfabsdbsdf']
+function paginate(array, page_size, page_number) {
+    // human-readable page numbers usually start with 1, so we reduce 1 in the first argument
+    return array.slice((page_number - 1) * page_size, page_number * page_size);
+}
 
+function getDocPage(array){
+    let keys = [];
+    array.forEach(function (value, i) {
+        keys.push([Markup.callbackButton(value, i )])
+    });
 
-bot.command('inspiration', async(ctx) => {
+    return keys
+}
+
+function getPagination( current, maxpage ) {
+    let keys = [];
+    if (current>1) keys.push(Markup.callbackButton(`«1`, '1' ));
+    if (current>2) keys.push(Markup.callbackButton(`‹${current-1}`, (current-1).toString() ));
+    keys.push(Markup.callbackButton(`-${current}-`,  current.toString() ));
+    if (current<maxpage-1) keys.push(Markup.callbackButton(`${current+1}›`, (current+1).toString() ))
+    if (current<maxpage) keys.push(Markup.callbackButton( `${maxpage}»`, maxpage.toString() ));
+
+    return keys
+}
+
+bot.command('/book', async(ctx) => {
+    ctx.reply('Choose a doctor',  Markup.inlineKeyboard([getPagination(25,bookPages),[
+        Markup.callbackButton('👍', 'like'),
+        Markup.callbackButton('👎', 'dislike')
+    ]] ).extra(), );
+});
+bot.on('callback_query', async(ctx) => {
     try {
-        console.log('inspiration command');
-        ctx.reply();
+        console.log(ctx.update.callback_query.message);
+
+        ctx.editMessageText('Page:' + ctx.update.callback_query.data,
+            Telegraf.Markup.inlineKeyboard(getPagination(parseInt(ctx.update.callback_query.data),bookPages)).extra())
     } catch (e) {
         console.log("Something went wrong while inspiration " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+    // function (message) {
+    // var msg = message.message;
+    // var editOptions = Object.assign({}, getPagination(parseInt(message.data), bookPages), { chat_id: msg.chat.id, message_id: msg.message_id});
+    // bot.editMessageText('Page: ' + message.data, editOptions);
+});
+
+
+bot.command('pagination', async(ctx) => {
+    try {
+        console.log('pagination command');
+        ctx.reply('Page: 25', {reply_markup: getPagination(25,bookPages)});
+    } catch (e) {
+        console.log("Something went wrong while pagination " + e);
         ctx.reply(`Some server problem, contact bot creator @TGIfr`);
     }
 });
@@ -119,8 +168,13 @@ bot.command('inspiration', async(ctx) => {
 bot.command('setphone', async (ctx) => {
     try {
         console.log('setphone command')
+
         ctx.reply('Send me your number please',
-            { reply_markup: { keyboard: [[{text: '📲 Send phone number', request_contact: true}]] } })
+
+            Telegraf.Markup.keyboard([Telegraf.Markup.contactRequestButton('Надіслати свій контакт')])
+                .oneTime()
+                .resize()
+                .extra())
 
     } catch (e) {
         console.log("Error while sephone command " + e);
@@ -130,9 +184,21 @@ bot.command('setphone', async (ctx) => {
 
 bot.on('contact',async (ctx) => {
     try {
-        console.log(ctx.message)
+        console.log(ctx.message.contact.phone_number)
+        console.log(ctx.message.chat.id)
         console.log('getting phone command')
         ctx.reply('Номер телефону встановлено!', Telegraf.Extra.markup(Telegraf.Markup.removeKeyboard()))
+
+    } catch (e) {
+        console.log("Error while getting command " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+});
+
+bot.command(/\/qr_[0-9]+/,async (ctx) => {
+    try {
+        console.log(ctx)
+        ctx.reply('fuckkk')
 
     } catch (e) {
         console.log("Error while getting command " + e);
