@@ -36,8 +36,8 @@ if(process.env.NODE_ENV !== 'development'){
 
 expressApp.use(bot.webhookCallback(`/bot${API_TOKEN}`));
 
-var bookPages = 100;
-
+//TODO get doctors
+//TODO map doctors name and id
 let doctors = ['sdf', 'asdfsafd', 'arhgf', 'sfdaujfd', 'asvbfadsf', 'asdfadfhfds', 'asdfawerfsd', 'asdsanbdf', 'asdfaxcvsdf', 'asdsdffasdf', 'asdfabsdbsdf']
 function paginate(array, page_size, page_number) {
     // human-readable page numbers usually start with 1, so we reduce 1 in the first argument
@@ -46,8 +46,9 @@ function paginate(array, page_size, page_number) {
 
 function getDocPage(array){
     let keys = [];
+    //TODO  doctors name and id
     array.forEach(function (value, i) {
-        keys.push([Markup.callbackButton(value, i )])
+        keys.push([Markup.callbackButton(value, `doc_${i}` )])
     });
 
     return keys
@@ -63,23 +64,99 @@ function getPagination( current, maxpage ) {
 
     return keys
 }
+const pageSize = 3
+const pagesTotal = Math.ceil(doctors.length/pageSize)
 
 bot.command('/book', async(ctx) => {
-    ctx.reply('Choose a doctor',  Markup.inlineKeyboard([getPagination(25,bookPages),[
-        Markup.callbackButton('👍', 'like'),
-        Markup.callbackButton('👎', 'dislike')
-    ]] ).extra(), );
-});
-bot.on('callback_query', async(ctx) => {
     try {
-        console.log(ctx.update.callback_query.message);
-
-        ctx.editMessageText('Page:' + ctx.update.callback_query.data,
-            Telegraf.Markup.inlineKeyboard(getPagination(parseInt(ctx.update.callback_query.data),bookPages)).extra())
+        let docs = paginate(doctors, pageSize, 2)
+        let doctorButtons = getDocPage(docs)
+        console.log('book command')
+        ctx.reply('Choose a doctor',  Markup.inlineKeyboard(doctorButtons
+            .concat([getPagination(2,pagesTotal) ])).extra(), );
     } catch (e) {
-        console.log("Something went wrong while inspiration " + e);
+        console.log("Something went wrong while book command" + e);
         ctx.reply(`Some server problem, contact bot creator @TGIfr`);
     }
+
+});
+
+function pageCase(ctx){
+    try {
+        let docs = paginate(doctors, pageSize, parseInt(ctx.update.callback_query.data))
+        let doctorButtons = getDocPage(docs)
+        ctx.editMessageText('Choose a doctor',  Markup.inlineKeyboard(doctorButtons
+            .concat([getPagination(parseInt(ctx.update.callback_query.data),pagesTotal) ]))
+            .extra(), );
+
+        console.log('pageCase')
+    } catch (e) {
+        console.log("Something went wrong while other callback " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+}
+
+const dateTimeArr = [
+    '12:00 22.12',
+    '12:30 22.12',
+    '13:00 22.12',
+    '13:30 22.12',
+    '14:00 22.12',
+]
+
+function getTimes(){
+    let times = []
+    dateTimeArr.forEach((x, i) => times.push(Markup.callbackButton(x, `time_${i}` )))
+    return times
+}
+function docCase(ctx){
+    try {
+        let docId = ctx.update.callback_query.data.slice(4)[0]
+        ctx.reply('kinda made a booking ' + doctors[docId])
+        ctx.reply('Choose time',  Markup.inlineKeyboard(getTimes()).extra());
+        console.log('docCase')
+    } catch (e) {
+        console.log("Something went wrong while doc case " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+}
+
+function timeCase(ctx){
+    try {
+        let timeId = ctx.update.callback_query.data.slice(5)[0]
+        ctx.reply('kinda chose time ' + dateTimeArr[timeId])
+        ctx.reply('Here is time!');
+        //TODO booking
+        console.log('timeCase')
+    } catch (e) {
+        console.log("Something went wrong while time " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+}
+
+function qrCase(ctx){
+    try {
+        let timeId = ctx.update.callback_query.data.slice(3)[0]
+        ctx.reply('qr id ' + dateTimeArr[timeId])
+        ctx.reply('Here is time!');
+        console.log('timeCase')
+    } catch (e) {
+        console.log("Something went wrong while time " + e);
+        ctx.reply(`Some server problem, contact bot creator @TGIfr`);
+    }
+}
+
+bot.on('callback_query', async(ctx) => {
+    console.log('callback_query')
+    if(ctx.update.callback_query.data.match(/doc_/))
+        docCase(ctx)
+    else if(ctx.update.callback_query.data.match(/time_/))
+        timeCase(ctx)
+    else if(ctx.update.callback_query.data.match(/qr_/))
+        qrCase(ctx)
+    else
+        pageCase(ctx)
+
     // function (message) {
     // var msg = message.message;
     // var editOptions = Object.assign({}, getPagination(parseInt(message.data), bookPages), { chat_id: msg.chat.id, message_id: msg.message_id});
@@ -97,74 +174,6 @@ bot.command('pagination', async(ctx) => {
     }
 });
 
-// bot.command('getbyname', async(ctx) => {
-//     try {
-//         let parameter = getParameter( ctx.message.text)
-//         if (parameter === undefined) {
-//             ctx.reply(`No parameter`)
-//             return
-//         }
-//         let cocktails = await getCocktailByName(parameter)
-//         if (!cocktails.length) {
-//             ctx.reply(`cocktail with name ${parameter} not found`)
-//             return
-//         }
-//         let cocktail = formatCocktailWithPreview(cocktails[0])
-//
-//         console.log('getbyname command');
-//         ctx.replyWithMarkdown(cocktail)
-//         ctx.reply(await getFirstVideoLink(cocktails[0].name, KEY))
-//     } catch (e) {
-//         if(e.name === 'param' || e.name === 'TypeError: Cannot read property \'length\' of undefined'){
-//             ctx.reply('No parameter')
-//             console.log("No parameter at getbyname")
-//         } else {
-//             console.log("Something went wrong while getbyname " + e.name);
-//             ctx.reply("No parameter")
-//         }
-//     }
-// });
-//
-//
-// bot.command('getbyingredient', async (ctx) => {
-//     try {
-//         let parameter = getParameter( ctx.message.text)
-//         if (parameter === undefined) {
-//
-//             ctx.reply(`No parameter`)
-//             return
-//         }
-//         let cocktails = await getCocktailsByIngredient(parameter)
-//         if (!cocktails.length) {
-//             ctx.reply(`cocktails with ingredient ${parameter} not found`)
-//             return
-//         }
-//
-//         console.log('getbyingredient command');
-//         cocktails.forEach(c => ctx.replyWithMarkdown(formatCocktailWithPreview(c[0])))
-//     } catch (e) {
-//         if(e.name === 'param' || e.name === 'TypeError: Cannot read property \'length\' of undefined'){
-//             ctx.reply('No parameter')
-//             console.log("No parameter at getbyingredient")
-//         } else {
-//             console.log("Something went wrong while getbyingredient " + e);
-//             ctx.reply("No parameter")
-//         }
-//     }
-// });
-//
-// bot.command('random', async (ctx) => {
-//     try {
-//         let cocktail = await getRandomCocktail()
-//
-//         console.log('random command');
-//         ctx.replyWithMarkdown(formatCocktailWithPreview(cocktail))
-//     } catch (e) {
-//         console.log("Something went wrong while random command " + e);
-//         ctx.reply(`Some server problem, contact bot creator @TGIfr`);
-//     }
-// });
-//
 bot.command('setphone', async (ctx) => {
     try {
         console.log('setphone command')
