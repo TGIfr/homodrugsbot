@@ -134,7 +134,7 @@ function timeCase(ctx){
     }
 }
 
-const qrPage = 'http://192.150.0.150:5001/api/Recipe/'
+const qrPage = 'http://192.168.0.105:3005/api/recipe/pdf/'
 function qrCase(ctx){
     try {
         let qrId = ctx.update.callback_query.data.slice(3)
